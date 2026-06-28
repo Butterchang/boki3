@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>簿記 第2問・第3問 ── 弱点トレーナー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1620; --bg2:#13202C; --surface:#1A2733; --surface2:#213140;
+  --line:#2C3F52; --line2:#3A5066;
+  --ink:#EAF1F7; --ink2:#93A7B8; --ink3:#5F7689;
+  --brand:#51A8DD; --debit:#51A8DD; --credit:#E2A24A;
+  --ok:#4FD89A; --bad:#F06C6C; --warn:#E6C84F;
+  --mono:'JetBrains Mono',monospace;
+  --disp:'Zen Kaku Gothic New','Noto Sans TC',sans-serif;
+  --body:'Noto Sans TC','Zen Kaku Gothic New',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.7;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+::selection{background:var(--brand);color:#0E1620}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#13202C 0%,#0E1620 100%);padding:42px 0 28px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.26em;color:var(--brand);text-transform:uppercase;margin-bottom:13px}
+h1{font-family:var(--disp);font-weight:900;font-size:clamp(28px,5vw,46px);line-height:1.1;letter-spacing:-.01em}
+h1 .sub{display:block;font-size:clamp(13px,2.3vw,18px);font-weight:500;color:var(--ink2);margin-top:11px}
+.lead{margin-top:18px;max-width:680px;color:var(--ink2);font-size:14.5px}
+.lead b{color:var(--ink);font-weight:700}
+
+.taccount-rule{display:flex;align-items:flex-end;height:32px;opacity:.85}
+.taccount-rule .l,.taccount-rule .r{flex:1;border-top:2px solid var(--line2)}
+.taccount-rule .mid{width:2px;height:32px;background:var(--line2)}
+
+nav{position:sticky;top:0;z-index:50;background:rgba(14,22,32,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;scrollbar-width:none}
+nav .wrap::-webkit-scrollbar{display:none}
+nav a{font-family:var(--mono);font-size:12.5px;color:var(--ink2);text-decoration:none;padding:7px 13px;border-radius:7px;white-space:nowrap;transition:.15s}
+nav a:hover{color:var(--ink);background:var(--surface)}
+
+section{padding:50px 0 8px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+.sec-num{font-family:var(--mono);font-size:13px;color:var(--brand);font-weight:700}
+h2{font-family:var(--disp);font-weight:700;font-size:clamp(21px,3.4vw,28px);letter-spacing:-.005em}
+.sec-desc{color:var(--ink2);font-size:14px;margin:10px 0 24px;max-width:720px}
+
+/* TRAINER */
+.trainer{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:24px}
+.tr-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.filters{display:flex;gap:7px;flex-wrap:wrap}
+.filters button{font-family:var(--mono);font-size:11.5px;color:var(--ink2);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 13px;cursor:pointer;transition:.15s}
+.filters button:hover{color:var(--ink);border-color:var(--line2)}
+.filters button.on{background:var(--brand);color:#0E1620;border-color:var(--brand);font-weight:700}
+.qcount{font-family:var(--mono);font-size:12.5px;color:var(--ink3)}
+
+.q-meta{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap}
+.q-idx{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+.q-cat{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:3px 9px;border-radius:5px;background:var(--surface2);color:var(--ink2)}
+.q-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:3px 9px;border-radius:5px;background:rgba(81,168,221,.14);color:var(--brand)}
+.q-title{font-family:var(--disp);font-weight:700;font-size:16px;margin-bottom:8px}
+.q-prompt{font-size:14px;line-height:1.7;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:0 12px 12px 0;padding:15px 18px;margin-bottom:16px}
+.q-prompt .amt{font-family:var(--mono);color:var(--brand);font-weight:700}
+.q-prompt ol{margin:8px 0 0 20px;font-size:13.5px;color:var(--ink2)}
+.q-prompt li{margin:3px 0}
+.q-prompt .small{font-size:12px;color:var(--ink3);margin-top:8px}
+
+/* grid table (T-account / worksheet / fill) */
+.scroll-x{overflow-x:auto;scrollbar-width:thin}
+.gtable{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.gc{background:var(--surface);padding:8px 11px;font-size:13px;display:flex;align-items:center;min-height:40px}
+.gc.hd{background:var(--surface2);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink2);font-weight:700}
+.gc.hd.dr{color:var(--debit)} .gc.hd.cr{color:var(--credit)}
+.gc.lbl{color:var(--ink2);font-size:12.5px}
+.gc.amt{font-family:var(--mono);justify-content:flex-end;color:var(--ink)}
+.gc.tot{background:var(--bg2);font-weight:700;border-top:2px solid var(--line2)}
+.gc.sect{background:var(--surface2);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--credit)}
+.gc input{font-family:var(--mono);font-size:13px;background:var(--bg2);color:var(--ink);border:1px solid var(--line2);border-radius:6px;padding:6px 8px;width:100%;text-align:right}
+.gc input.txt{text-align:left;font-family:var(--body)}
+.gc input:focus{outline:none;border-color:var(--brand)}
+.gc input.correct{border-color:var(--ok);background:rgba(79,216,154,.08);color:var(--ok)}
+.gc input.wrong{border-color:var(--bad);background:rgba(240,108,108,.08)}
+
+/* choice */
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px}
+.choice{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:11px 14px;cursor:pointer;font-size:13.5px;transition:.15s;user-select:none}
+.choice:hover{border-color:var(--line2)}
+.choice.sel{border-color:var(--brand);background:rgba(81,168,221,.08)}
+.choice.correct{border-color:var(--ok);background:rgba(79,216,154,.08)}
+.choice.wrong{border-color:var(--bad);background:rgba(240,108,108,.08)}
+.choice.miss{border-color:var(--warn);background:rgba(230,200,79,.08)}
+.choice .box{width:18px;height:18px;border-radius:5px;border:2px solid var(--line2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-family:var(--mono)}
+.choice.sel .box{border-color:var(--brand);background:var(--brand);color:#0E1620}
+
+.tr-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{font-family:var(--disp);font-weight:700;font-size:14px;border:none;border-radius:9px;padding:11px 22px;cursor:pointer;transition:.15s}
+.btn-primary{background:var(--brand);color:#0E1620}.btn-primary:hover{background:#6FBCE8}
+.btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--line)}.btn-ghost:hover{color:var(--ink);border-color:var(--line2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.feedback{margin-top:18px;border-radius:12px;overflow:hidden;display:none}
+.feedback.show{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fb-banner{padding:11px 18px;font-family:var(--disp);font-weight:700;font-size:14.5px}
+.fb-banner.ok{background:rgba(79,216,154,.13);color:var(--ok)}
+.fb-banner.no{background:rgba(240,108,108,.13);color:var(--bad)}
+.fb-banner .sc{font-family:var(--mono);font-size:12px;font-weight:400;margin-left:8px;opacity:.8}
+.fb-body{background:var(--surface);padding:16px 19px;border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;font-size:13.5px;color:var(--ink2);line-height:1.75}
+.fb-body b{color:var(--credit);font-weight:700}
+.fb-body code{font-family:var(--mono);background:var(--bg2);padding:1px 6px;border-radius:4px;color:var(--brand);font-size:12.5px}
+.fb-body .ans-line{font-family:var(--mono);font-size:12.5px;color:var(--ink);background:var(--bg2);border-radius:7px;padding:8px 12px;margin:6px 0;line-height:1.8}
+
+/* dashboard */
+.dash{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:24px}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:13px;margin-bottom:18px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px;border-top:3px solid var(--line2)}
+.dcard.s-strong{border-top-color:var(--ok)} .dcard.s-mid{border-top-color:var(--warn)} .dcard.s-weak{border-top-color:var(--bad)} .dcard.s-none{border-top-color:var(--line2)}
+.dcard .cat{font-family:var(--disp);font-size:14px;font-weight:700;margin-bottom:4px}
+.dcard .rate{font-family:var(--mono);font-size:24px;font-weight:700;line-height:1.1}
+.dcard.s-strong .rate{color:var(--ok)} .dcard.s-mid .rate{color:var(--warn)} .dcard.s-weak .rate{color:var(--bad)} .dcard.s-none .rate{color:var(--ink3)}
+.dcard .det{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-top:3px}
+.dcard .pbar{height:5px;background:var(--surface2);border-radius:3px;margin-top:9px;overflow:hidden}
+.dcard .pfill{height:100%;border-radius:3px;transition:width .4s}
+.advice{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.advice .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--brand);margin-bottom:10px}
+.advice p{font-size:13.5px;color:var(--ink2);margin:6px 0;line-height:1.7}
+.advice p b{color:var(--ink)}
+.advice a{color:var(--brand);text-decoration:none;border-bottom:1px dashed var(--brand)}
+.dash-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.copied{font-family:var(--mono);font-size:12px;color:var(--ok);align-self:center;display:none}
+
+/* review accordions */
+.acc{border:1px solid var(--line);border-radius:12px;margin-bottom:11px;overflow:hidden;background:var(--surface)}
+.acc summary{padding:16px 20px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:13px;font-family:var(--disp);font-weight:700;font-size:15.5px;transition:.15s}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary:hover{background:var(--surface2)}
+.acc summary .k{font-family:var(--mono);font-size:12px;color:var(--brand);font-weight:700}
+.acc summary .chev{margin-left:auto;color:var(--ink3);font-family:var(--mono);transition:.2s}
+.acc[open] summary .chev{transform:rotate(90deg);color:var(--brand)}
+.acc-body{padding:4px 20px 20px;border-top:1px solid var(--line)}
+.acc-body p{font-size:13.5px;color:var(--ink2);margin:9px 0}
+.acc-body p b{color:var(--ink)}
+.acc-body ol{margin:8px 0 8px 20px;font-size:13.5px;color:var(--ink2)}
+.acc-body ol li{margin:5px 0}
+.acc-body ol li b{color:var(--ink)}
+.je{font-family:var(--mono);font-size:13px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:10px 0;line-height:1.9}
+.je .d{color:var(--debit)} .je .c{color:var(--credit)} .je .sl{color:var(--ink3);margin:0 8px}
+.warn{border-left:3px solid var(--warn);background:rgba(230,200,79,.07);padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:var(--ink2);margin:10px 0}
+.warn b{color:var(--warn)}
+
+footer{border-top:1px solid var(--line);margin-top:56px;padding:28px 0;text-align:center;color:var(--ink3);font-size:12px;font-family:var(--mono);letter-spacing:.03em;line-height:1.8}
+
+@media(max-width:720px){.j-row{grid-template-columns:1fr 80px}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="eyebrow">日商簿記3級 ── 第2問 ＆ 第3問</div>
+  <h1>弱点トレーナー
+    <span class="sub">勘定記入・補助簿・精算表・財務諸表 ── 填表型題型專攻　／　給尼貝爾</span>
+  </h1>
+  <p class="lead">第 2 問（約 20 點）＋ 第 3 問（約 35 點）＝ 過半分值，而且最吃<b>「把數字填進正確格子」的手感</b>。這台練習機把這兩大題型做成可填的表格，做完每題會即時更新下方的<b>弱點儀表板</b>，告訴你哪一類該回去重練。</p>
+</div></header>
+
+<nav><div class="wrap">
+  <a href="#trainer">練習機</a>
+  <a href="#dashboard">弱點儀表板</a>
+  <a href="#review2">第2問 套路</a>
+  <a href="#review3">第3問 稿紙法</a>
+</div></nav>
+
+<!-- TRAINER -->
+<section id="trainer">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>練習機</h2></div>
+    <p class="sec-desc">選下方科目／填金額，提交後逐格標紅綠並給解說。文字格（摘要）填日文科目名。可用標籤只練某一類。</p>
+    <div class="trainer">
+      <div class="tr-top">
+        <div class="filters" id="filters"></div>
+        <span class="qcount" id="qcount"></span>
+      </div>
+      <div class="q-meta">
+        <span class="q-idx" id="qIdx"></span>
+        <span class="q-cat" id="qCat"></span>
+        <span class="q-tag" id="qTag"></span>
+      </div>
+      <div class="q-title" id="qTitle"></div>
+      <div class="q-prompt" id="qPrompt"></div>
+      <div id="qArea"></div>
+      <div class="tr-actions">
+        <button class="btn btn-primary" id="btnCheck">採点する</button>
+        <button class="btn btn-ghost" id="btnReveal">正解を見る</button>
+        <button class="btn btn-ghost" id="btnNext">次の問題 →</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="taccount-rule"><div class="l"></div><div class="mid"></div><div class="r"></div></div></div>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>弱點儀表板</h2></div>
+    <p class="sec-desc">本次練習的即時統計（重新整理會歸零）。每類顯示「全對題數／嘗試題數」與正解率：<span style="color:var(--bad)">紅 &lt;60%</span> ＝ 要加強、<span style="color:var(--warn)">黃 60–85%</span>、<span style="color:var(--ok)">綠 &gt;85%</span>。下方會根據你最弱的類別給複習指引。</p>
+    <div class="dash">
+      <div class="dash-grid" id="dashGrid"></div>
+      <div class="advice">
+        <div class="lbl">複習指引（依當前弱項自動更新）</div>
+        <div id="adviceBody"><p style="color:var(--ink3)">還沒有作答紀錄。先到上面練幾題，這裡會告訴你該重點複習什麼。</p></div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-ghost" id="btnCopy">複製弱點報告</button>
+        <button class="btn btn-ghost" id="btnReset">統計をリセット</button>
+        <span class="copied" id="copied">✓ コピーしました</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="taccount-rule"><div class="l"></div><div class="mid"></div><div class="r"></div></div></div>
+
+<!-- REVIEW 2 -->
+<section id="review2">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>第 2 問 解題套路</h2></div>
+    <p class="sec-desc">第 2 問常不是純分錄，而是「<b>理解帳簿之間的關係</b>」。核心心法：勘定記入先寫分錄再搬帳戶、摘要寫相手科目。</p>
+
+    <details class="acc" open><summary><span class="k">A</span>勘定記入（T字帳填寫）<span class="chev">▸</span></summary>
+      <div class="acc-body">
+        <ol>
+          <li>把題目所有交易<b>先全部寫成分錄</b>，不要憑感覺直接填 T 字帳。</li>
+          <li>找到目標勘定，看它在每筆分錄出現在<b>借方還是貸方</b>，就寫進帳戶的同一邊。</li>
+          <li><b>摘要寫「相手科目」</b>（對方科目）。例：現金回收売掛金，売掛金帳戶貸方那行摘要寫「現金」。</li>
+          <li>最後補餘額：資產帳戶餘額在借方，故貸方寫「次期繰越」平衡；下一期借方寫「前期繰越」。負債／純資產相反。</li>
+        </ol>
+        <div class="je">売掛金（資産）：増加→<span class="d">借方</span>（相手 売上）　／　回収・返品・貸倒→<span class="c">貸方</span>（相手 現金・売上）</div>
+        <div class="warn"><b>易錯：</b>「次期繰越」是為了平衡而寫，金額＝借貸差額。把它和真正的交易分錄混淆，或方向放反，是最常見的失分。</div>
+      </div>
+    </details>
+
+    <details class="acc"><summary><span class="k">B</span>補助簿（売掛金元帳・商品有高帳 等）<span class="chev">▸</span></summary>
+      <div class="acc-body">
+        <p>先確認該補助簿<b>按什麼維度記錄</b>：売掛金元帳按<b>得意先</b>（客戶）、買掛金元帳按<b>仕入先</b>（供應商）。總帳的売掛金餘額＝所有客戶売掛金餘額合計。</p>
+        <p><b>商品有高帳</b>管理數量・單價・金額，兩種方法：</p>
+        <ol>
+          <li><b>先入先出法</b>：先買的先賣出，払出成本按較早批次計算，期末留下較新批次。</li>
+          <li><b>移動平均法</b>：每次購入後重算平均單價＝<code>(残高金額+仕入金額)÷(残高数量+仕入数量)</code>，之後的払出與残高都用這個單價，直到下次購入。</li>
+        </ol>
+        <div class="warn"><b>易錯：</b>商品有高帳記的是「商品的進出與成本」，<b>不記銷售價格</b>（売価）。三分法日常分錄只認売上，商品有高帳只管成本流動。</div>
+      </div>
+    </details>
+
+    <details class="acc"><summary><span class="k">C</span>補助簿の選択（空欄補充常見型）<span class="chev">▸</span></summary>
+      <div class="acc-body">
+        <p>給一筆交易，問「會記入哪些補助簿」。做法：把交易拆解成幾個動作，每個動作對應一本帳。</p>
+        <ol>
+          <li>有<b>進貨</b> → 仕入帳；有<b>銷售</b> → 売上帳。</li>
+          <li>商品數量有變 → <b>商品有高帳</b>（含含運費的進貨）。</li>
+          <li>掛 → 買掛金元帳／売掛金元帳；現金 → 現金出納帳；他人振出小切手＝<b>現金</b> → 現金出納帳。</li>
+          <li>手形 → 受取／支払手形記入帳；當座小切手 → 当座預金出納帳。</li>
+        </ol>
+      </div>
+    </details>
+  </div>
+</section>
+
+<div class="wrap"><div class="taccount-rule"><div class="l"></div><div class="mid"></div><div class="r"></div></div></div>
+
+<!-- REVIEW 3 -->
+<section id="review3">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>第 3 問 精算表の稿紙法</h2></div>
+    <p class="sec-desc">第 3 問看起來複雜，是因為資訊量大。穩定拿分＝<b>把它拆成 7 條獨立的整理仕訳</b>，逐條寫、逐條填，不要同時想整張表。</p>
+
+    <details class="acc" open><summary><span class="k">①</span>解題六步<span class="chev">▸</span></summary>
+      <div class="acc-body">
+        <ol>
+          <li>先看<b>會計期間與決算日</b>（決定月割）。</li>
+          <li>把整理事項<b>逐條做成分錄</b>（在題目旁打草稿：①現金過不足 ②売上原価 ③貸倒 ④減価償却 ⑤消費税 ⑥経過勘定 ⑦法人税等）。</li>
+          <li>涉及時間分攤時<b>畫月份線</b>。</li>
+          <li>把分錄填入<b>修正記入欄</b>（借→修正借、貸→修正貸）。</li>
+          <li>資産／負債／純資産 → 貸借対照表欄；収益／費用 → 損益計算書欄。同一科目若試算表餘額＋修正額，<b>合併後</b>再進 P/L 或 B/S。</li>
+          <li>算出<b>当期純利益</b>，使兩張表平衡。</li>
+        </ol>
+        <div class="warn"><b>当期純利益的方向：</b>P/L 費用在借、收益在貸。收益＞費用時，利益填 P/L <b>借方</b>（讓 P/L 左右平衡）；利益增加純資產，故 B/S <b>貸方</b>。虧損相反。</div>
+      </div>
+    </details>
+
+    <details class="acc"><summary><span class="k">②</span>三項最後檢查<span class="chev">▸</span></summary>
+      <div class="acc-body">
+        <ol>
+          <li>修正記入欄借貸合計<b>相等</b>。</li>
+          <li>P/L 與 B/S 的利益金額<b>一致、方向相反</b>。</li>
+          <li>当期純利益已反映到<b>繰越利益剰余金</b>（財務諸表的連結：PL の当期純利益 → BS の純資産）。</li>
+        </ol>
+        <p>還有：<b>前払・未収是資產；前受・未払是負債</b>。減価償却累計額、貸倒引当金在 B/S 是<b>資產的控除項（△）</b>。</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<footer>
+  借方｜貸方　左右必須相等。<br>
+  第2問搬帳戶、第3問拆 7 條 ── 把大題拆小，平衡自然浮現。<br>
+  © 弱点トレーナー for 尼貝爾
+</footer>
+
+<script>
+/* ── 科目清單 ── */
+const SUBJECTS = {
+  "資産":["現金","当座預金","普通預金","売掛金","クレジット売掛金","受取手形","電子記録債権","繰越商品","貯蔵品","前払金","前払保険料","前払家賃","未収入金","未収利息","仮払金","仮払消費税","仮払法人税等","立替金","備品","車両","建物","貸付金"],
+  "負債":["買掛金","支払手形","電子記録債務","前受金","前受家賃","未払金","未払費用","未払利息","未払消費税","未払法人税等","未払配当金","預り金","所得税預り金","借入金","当座借越","貸倒引当金"],
+  "純資産":["資本金","繰越利益剰余金","利益準備金"],
+  "収益":["売上","受取利息","受取家賃","受取手数料","固定資産売却益","雑益","貸倒引当金戻入"],
+  "費用":["仕入","給料","通信費","交際費","旅費交通費","消耗品費","支払家賃","支払利息","支払手数料","支払保険料","減価償却費","貸倒引当金繰入","貸倒損失","租税公課","発送費","雑損","法人税、住民税及び事業税"]
+};
+function opts(sel){
+  let h=`<option value="">― 科目 ―</option>`;
+  for(const g in SUBJECTS){h+=`<optgroup label="${g}">`;SUBJECTS[g].forEach(s=>{h+=`<option${s===sel?" selected":""}>${s}</option>`;});h+=`</optgroup>`;}
+  return h;
+}
+
+/* ── helpers ── */
+function num(v){return parseInt(String(v).replace(/[^0-9]/g,''),10)||0;}
+function fmt(n){return n.toLocaleString('ja-JP');}
+
+/*
+ grid cell:
+   {v:'文字', c:'class'}                固定
+   {sel:true, a:'科目', id}             科目下拉（文字答案）
+   {in:'num'|'txt', a:答案, id, ph}      輸入框
+   {v:''}                                空白
+*/
+
+const PROB=[
+/* ============ 第2問 ============ */
+{
+ cat:"勘定記入",tag:"第2問",title:"売掛金勘定の記入",
+ prompt:`次の取引にもとづき、<b>売掛金勘定</b>の空欄（摘要・金額）を埋めなさい。摘要は相手科目を記入する。<ol>
+   <li>前期繰越 ¥50,000</li><li>商品 ¥150,000 を掛けで売り上げた</li>
+   <li>売掛金 ¥100,000 を現金で回収した</li><li>商品 ¥80,000 を掛けで売り上げた</li>
+   <li>②の商品のうち ¥20,000 が返品された</li></ol>`,
+ cols:"1.2fr .9fr 1.2fr .9fr",
+ cells:[
+  {v:"借方　摘要",c:"hd dr"},{v:"金額",c:"hd dr"},{v:"貸方　摘要",c:"hd cr"},{v:"金額",c:"hd cr"},
+  {v:"前期繰越",c:"lbl"},{v:"50,000",c:"amt"},{v:"現金",c:"lbl"},{v:"100,000",c:"amt"},
+  {sel:true,a:"売上",id:"d2"},{v:"150,000",c:"amt"},{sel:true,a:"売上",id:"c2"},{v:"20,000",c:"amt"},
+  {sel:true,a:"売上",id:"d3"},{in:"num",a:80000,id:"d3a"},{sel:true,a:"次期繰越",id:"c3"},{in:"num",a:160000,id:"c3a"},
+  {v:"計",c:"lbl tot"},{in:"num",a:280000,id:"dt"},{v:"計",c:"lbl tot"},{in:"num",a:280000,id:"ct"}
+ ],
+ explain:`借方計＝50,000+150,000+80,000＝<b>280,000</b>。貸方は現金100,000＋返品20,000＋次期繰越X＝280,000 → <b>次期繰越160,000</b>。返品は売上の取消なので相手科目は「売上」。摘要は必ず<b>相手科目</b>を書く。`
+},
+{
+ cat:"勘定記入",tag:"第2問",title:"買掛金勘定の記入",
+ prompt:`次の取引にもとづき、<b>買掛金勘定</b>の空欄を埋めなさい。買掛金は負債なので残高は貸方、次期繰越は借方に記入する。<ol>
+   <li>前期繰越 ¥80,000</li><li>商品 ¥200,000 を掛けで仕入れた</li>
+   <li>買掛金 ¥100,000 を現金で支払った</li><li>②の商品のうち ¥30,000 を返品した</li></ol>`,
+ cols:"1.2fr .9fr 1.2fr .9fr",
+ cells:[
+  {v:"借方　摘要",c:"hd dr"},{v:"金額",c:"hd dr"},{v:"貸方　摘要",c:"hd cr"},{v:"金額",c:"hd cr"},
+  {sel:true,a:"現金",id:"d1"},{v:"100,000",c:"amt"},{v:"前期繰越",c:"lbl"},{v:"80,000",c:"amt"},
+  {sel:true,a:"仕入",id:"d2"},{v:"30,000",c:"amt"},{sel:true,a:"仕入",id:"c2"},{in:"num",a:200000,id:"c2a"},
+  {sel:true,a:"次期繰越",id:"d3"},{in:"num",a:150000,id:"d3a"},{v:"",c:""},{v:"",c:""},
+  {v:"計",c:"lbl tot"},{in:"num",a:280000,id:"dt"},{v:"計",c:"lbl tot"},{in:"num",a:280000,id:"ct"}
+ ],
+ explain:`貸方計＝80,000+200,000＝<b>280,000</b>。借方は現金100,000＋返品30,000＋次期繰越X＝280,000 → <b>次期繰越150,000</b>。掛仕入の相手は「仕入」、掛仕入の返品も相手は「仕入」。`
+},
+{
+ cat:"商品有高帳",tag:"第2問",title:"商品有高帳（移動平均法）",
+ prompt:`次の資料にもとづき、<b>移動平均法</b>での各数値を求めなさい。<ol>
+   <li>6/1 前月繰越 10個 @¥100</li><li>6/8 仕入 20個 @¥130</li>
+   <li>6/15 売上 15個</li><li>6/22 仕入 5個 @¥132</li><li>6/28 売上 12個</li></ol>
+   <span class="small">移動平均単価＝(残高金額＋仕入金額)÷(残高数量＋仕入数量)。売価は無関係。</span>`,
+ cols:"1.6fr 1fr",
+ cells:[
+  {v:"項目",c:"hd"},{v:"金額・数値",c:"hd"},
+  {v:"6/8 仕入後の平均単価 @",c:"lbl"},{in:"num",a:120,id:"a1"},
+  {v:"6/8 仕入後の残高金額",c:"lbl"},{in:"num",a:3600,id:"a2"},
+  {v:"6/22 仕入後の平均単価 @",c:"lbl"},{in:"num",a:123,id:"a3"},
+  {v:"6/28 売上時の払出金額",c:"lbl"},{in:"num",a:1476,id:"a4"},
+  {v:"月末在庫数量（個）",c:"lbl"},{in:"num",a:8,id:"a5"},
+  {v:"月末在庫金額",c:"lbl"},{in:"num",a:984,id:"a6"},
+  {v:"当月の売上原価（払出合計）",c:"lbl tot"},{in:"num",a:3276,id:"a7"}
+ ],
+ explain:`6/8：(10×100+20×130)÷30＝<code>3,600÷30＝120</code>。6/15払出15@120＝1,800、残15@120＝1,800。6/22：(1,800+5×132)÷20＝<code>2,460÷20＝123</code>。6/28払出12@123＝<b>1,476</b>、残<b>8個@123＝984</b>。売上原価＝1,800+1,476＝<b>3,276</b>。`
+},
+{
+ cat:"補助簿",tag:"第2問",title:"補助簿の選択 ①",kind:"choice",
+ prompt:`次の取引が記入される補助簿を<b>すべて</b>選びなさい。<br>「商品 ¥100,000 を掛けで仕入れ、引取運賃 ¥3,000 を現金で支払った。」`,
+ options:["仕入帳","売上帳","買掛金元帳","売掛金元帳","現金出納帳","当座預金出納帳","受取手形記入帳","支払手形記入帳","商品有高帳","固定資産台帳"],
+ answer:["仕入帳","買掛金元帳","現金出納帳","商品有高帳"],
+ explain:`仕入 → <b>仕入帳</b>。掛け → <b>買掛金元帳</b>（仕入先元帳）。引取運賃を現金で → <b>現金出納帳</b>。引取運賃は仕入原価に含めるので商品の取得原価が変わり → <b>商品有高帳</b>にも記入。`
+},
+{
+ cat:"補助簿",tag:"第2問",title:"補助簿の選択 ②",kind:"choice",
+ prompt:`次の取引が記入される補助簿を<b>すべて</b>選びなさい。<br>「商品 ¥200,000 を売り上げ、代金は先方振出の小切手で受け取った。」`,
+ options:["仕入帳","売上帳","買掛金元帳","売掛金元帳","現金出納帳","当座預金出納帳","受取手形記入帳","支払手形記入帳","商品有高帳","固定資産台帳"],
+ answer:["売上帳","現金出納帳","商品有高帳"],
+ explain:`売上 → <b>売上帳</b>。<b>他人振出の小切手は「現金」</b>として処理 → 現金出納帳（当座預金出納帳ではない！）。商品が出ていく → <b>商品有高帳</b>。掛けではないので売掛金元帳は不要。`
+},
+/* ============ 第3問 ============ */
+{
+ cat:"精算表",tag:"第3問",title:"精算表（決算整理後の金額）",
+ prompt:`次の決算整理事項にもとづき、精算表の空欄を埋めなさい。<br><b>試算表（整理前）：</b>繰越商品 80,000／仕入 600,000／給料 200,000／売掛金 500,000／貸倒引当金 3,000／備品 600,000／備品減価償却累計額 200,000／支払保険料 120,000／売上 1,200,000
+   <ol><li>期末商品棚卸高 ¥100,000</li><li>売掛金期末残高に 2% の貸倒引当金（差額補充法）</li>
+   <li>備品：定額法、耐用年数6年、残存価額ゼロ</li><li>支払保険料のうち ¥30,000 は前払い</li></ol>`,
+ cols:"1.4fr .95fr .95fr .95fr .95fr .95fr .95fr",
+ minw:"720px",
+ cells:[
+  {v:"勘定科目",c:"hd"},{v:"修正 借",c:"hd dr"},{v:"修正 貸",c:"hd cr"},{v:"P/L 借",c:"hd dr"},{v:"P/L 貸",c:"hd cr"},{v:"B/S 借",c:"hd dr"},{v:"B/S 貸",c:"hd cr"},
+  {v:"繰越商品",c:"lbl"},{in:"num",a:100000,id:"r1a"},{in:"num",a:80000,id:"r1b"},{v:"",c:""},{v:"",c:""},{in:"num",a:100000,id:"r1f"},{v:"",c:""},
+  {v:"仕入（売上原価）",c:"lbl"},{v:"80,000",c:"amt"},{v:"100,000",c:"amt"},{in:"num",a:580000,id:"r2c"},{v:"",c:""},{v:"",c:""},{v:"",c:""},
+  {v:"貸倒引当金繰入",c:"lbl"},{in:"num",a:7000,id:"r3a"},{v:"",c:""},{in:"num",a:7000,id:"r3c"},{v:"",c:""},{v:"",c:""},{v:"",c:""},
+  {v:"貸倒引当金",c:"lbl"},{v:"",c:""},{in:"num",a:7000,id:"r4b"},{v:"",c:""},{v:"",c:""},{v:"",c:""},{in:"num",a:10000,id:"r4g"},
+  {v:"減価償却費",c:"lbl"},{in:"num",a:100000,id:"r5a"},{v:"",c:""},{in:"num",a:100000,id:"r5c"},{v:"",c:""},{v:"",c:""},{v:"",c:""},
+  {v:"備品減価償却累計額",c:"lbl"},{v:"",c:""},{in:"num",a:100000,id:"r6b"},{v:"",c:""},{v:"",c:""},{v:"",c:""},{in:"num",a:300000,id:"r6g"},
+  {v:"支払保険料",c:"lbl"},{v:"",c:""},{v:"30,000",c:"amt"},{in:"num",a:90000,id:"r7c"},{v:"",c:""},{v:"",c:""},{v:"",c:""},
+  {v:"前払保険料",c:"lbl"},{v:"30,000",c:"amt"},{v:"",c:""},{v:"",c:""},{v:"",c:""},{in:"num",a:30000,id:"r8f"},{v:"",c:""}
+ ],
+ explain:`①売上原価＝600,000+80,000−100,000＝<b>580,000</b>、繰越商品 B/S＝100,000。②500,000×2%＝10,000、既存3,000 → 繰入<b>7,000</b>、貸倒引当金 B/S＝<b>10,000</b>。③600,000÷6＝<b>100,000</b>、累計額 B/S＝200,000+100,000＝<b>300,000</b>。④前払30,000、支払保険料＝120,000−30,000＝<b>90,000</b>。`
+},
+{
+ cat:"財務諸表",tag:"第3問",title:"損益計算書の完成",
+ prompt:`次の整理後の金額から、損益計算書の各利益を求めなさい。<br>売上 1,200,000／売上原価 580,000／給料 200,000／貸倒引当金繰入 7,000／減価償却費 100,000／支払保険料 90,000（営業外項目・法人税はなし）。`,
+ cols:"1.5fr 1fr",
+ cells:[
+  {v:"項目",c:"hd"},{v:"金額",c:"hd"},
+  {v:"売上総利益",c:"lbl"},{in:"num",a:620000,id:"p1"},
+  {v:"販売費及び一般管理費 合計",c:"lbl"},{in:"num",a:397000,id:"p2"},
+  {v:"営業利益（＝当期純利益）",c:"lbl tot"},{in:"num",a:223000,id:"p3"}
+ ],
+ explain:`売上総利益＝1,200,000−580,000＝<b>620,000</b>。販管費＝給料200,000+貸引繰入7,000+減価償却100,000+保険料90,000＝<b>397,000</b>。営業利益＝620,000−397,000＝<b>223,000</b>。営業外も法人税もないので、これが当期純利益。`
+},
+{
+ cat:"財務諸表",tag:"第3問",title:"財務諸表の連結（当期純利益の振替）",
+ prompt:`当期純利益が ¥223,000、期首の繰越利益剰余金が ¥150,000 であった。<br>① 貸借対照表に計上される<b>期末の繰越利益剰余金</b>はいくらか。<br>② 当期純利益は決算振替で<b>どの勘定</b>に振り替えられるか（摘要）。`,
+ cols:"1.5fr 1fr",
+ cells:[
+  {v:"項目",c:"hd"},{v:"答え",c:"hd"},
+  {v:"① 期末 繰越利益剰余金",c:"lbl"},{in:"num",a:373000,id:"f1"},
+  {v:"② 振替先の勘定",c:"lbl"},{sel:true,a:"繰越利益剰余金",id:"f2"}
+ ],
+ explain:`期末＝期首150,000＋当期純利益223,000＝<b>373,000</b>。P/L で計算した当期純利益は、損益勘定を経て純資産の増加分として<b>繰越利益剰余金</b>へ振り替えられる。これが「PL の利益 → BS の純資産」という<b>財務諸表の連結</b>。`
+},
+{
+ cat:"決算整理後T/B",tag:"第3問",title:"決算整理後残高試算表",
+ prompt:`前問と同じ整理事項を反映した<b>決算整理後残高試算表</b>の各勘定残高を求めなさい。<br>（整理前：繰越商品80,000／仕入600,000／貸倒引当金3,000／備品減価償却累計額200,000／支払保険料120,000）`,
+ cols:"1.5fr 1fr",
+ cells:[
+  {v:"勘定科目",c:"hd"},{v:"整理後残高",c:"hd"},
+  {v:"繰越商品",c:"lbl"},{in:"num",a:100000,id:"t1"},
+  {v:"仕入（売上原価）",c:"lbl"},{in:"num",a:580000,id:"t2"},
+  {v:"貸倒引当金",c:"lbl"},{in:"num",a:10000,id:"t3"},
+  {v:"備品減価償却累計額",c:"lbl"},{in:"num",a:300000,id:"t4"},
+  {v:"前払保険料",c:"lbl"},{in:"num",a:30000,id:"t5"},
+  {v:"支払保険料",c:"lbl"},{in:"num",a:90000,id:"t6"}
+ ],
+ explain:`繰越商品 → 期末<b>100,000</b>。仕入 → 600,000+80,000−100,000＝<b>580,000</b>。貸倒引当金 → 3,000+7,000＝<b>10,000</b>。備品減価償却累計額 → 200,000+100,000＝<b>300,000</b>。前払保険料 → <b>30,000</b>（新規・資産）。支払保険料 → 120,000−30,000＝<b>90,000</b>。決算整理後 T/B は、これらを集計して仕訳・記帳の誤りを検証するために作る。`
+}
+];
+
+/* ── stats ── */
+const CATS=["勘定記入","商品有高帳","補助簿","精算表","財務諸表","決算整理後T/B"];
+let stats={}; CATS.forEach(c=>stats[c]={tried:0,ok:0});
+
+const ADVICE={
+ "勘定記入":"勘定記入：先把交易全寫成分錄，<b>摘要寫相手科目</b>，次期繰越＝借貸差額。看 <a href='#review2'>第2問套路 A</a>。",
+ "商品有高帳":"商品有高帳：移動平均＝<b>(残高金額+仕入金額)÷(残高数量+仕入数量)</b>，每次購入重算單價；只記成本不記售價。看 <a href='#review2'>第2問套路 B</a>。",
+ "補助簿":"補助簿選択：把交易拆成動作對應帳本，注意<b>他人振出小切手＝現金</b>、含運費的進貨要記商品有高帳。看 <a href='#review2'>第2問套路 C</a>。",
+ "精算表":"精算表：拆成 7 條整理仕訳逐條填，<b>同科目試算表餘額＋修正額要合併</b>再進 P/L 或 B/S。看 <a href='#review3'>第3問稿紙法</a>。",
+ "財務諸表":"財務諸表：売上−売上原価＝売上総利益→扣販管費＝営業利益；<b>当期純利益→繰越利益剰余金</b>是連結重點。看 <a href='#review3'>第3問</a>。",
+ "決算整理後T/B":"決算整理後 T/B：整理後残高＝<b>整理前餘額±當期修正額</b>，特別注意貸倒引当金、減価償却累計額的累加。看 <a href='#review3'>第3問</a>。"
+};
+
+/* ── state ── */
+let pool=[...PROB], cur=0, answered=false;
+
+function renderGrid(q){
+  let h=`<div class="scroll-x"><div class="gtable" style="grid-template-columns:${q.cols};${q.minw?'min-width:'+q.minw:''}">`;
+  q.cells.forEach(c=>{
+    if(c.sel){h+=`<div class="gc"><select data-id="${c.id}" data-a="${c.a}" data-t="txt" class="selbox">${opts('')}</select></div>`;}
+    else if(c.in){h+=`<div class="gc"><input data-id="${c.id}" data-a="${c.a}" data-t="${c.in}" class="${c.in==='txt'?'txt':''}" inputmode="${c.in==='num'?'numeric':'text'}" placeholder="${c.ph||''}"></div>`;}
+    else{h+=`<div class="gc ${c.c||''}">${c.v||''}</div>`;}
+  });
+  h+=`</div></div>`;
+  // 把 select 改成輸入框風格：用 select 太擠，改文字輸入也可。保留 select。
+  return h;
+}
+function renderChoice(q){
+  let h=`<div class="choices">`;
+  q.options.forEach((o,i)=>{h+=`<div class="choice" data-opt="${o}"><span class="box"></span>${o}</div>`;});
+  h+=`</div>`;
+  return h;
+}
+
+function loadQ(){
+  answered=false;
+  const q=pool[cur];
+  document.getElementById('qIdx').textContent=`Q ${cur+1} / ${pool.length}`;
+  document.getElementById('qCat').textContent=q.cat;
+  document.getElementById('qTag').textContent=q.tag;
+  document.getElementById('qTitle').textContent=q.title;
+  document.getElementById('qPrompt').innerHTML=q.prompt;
+  const area=document.getElementById('qArea');
+  area.innerHTML = q.kind==='choice' ? renderChoice(q) : renderGrid(q);
+  if(q.kind==='choice'){
+    area.querySelectorAll('.choice').forEach(ch=>ch.addEventListener('click',()=>{if(!answered)ch.classList.toggle('sel');}));
+  }else{
+    // 將 select 換成更好用的下拉（原生）
+    area.querySelectorAll('select.selbox').forEach(s=>{
+      s.style.fontFamily='var(--body)';s.style.background='var(--bg2)';s.style.color='var(--ink)';
+      s.style.border='1px solid var(--line2)';s.style.borderRadius='6px';s.style.padding='6px 8px';s.style.width='100%';
+    });
+  }
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('feedback').innerHTML='';
+  document.getElementById('btnCheck').disabled=false;
+}
+
+function gradeGrid(q){
+  let ok=0,tot=0;
+  document.querySelectorAll('#qArea input, #qArea select.selbox').forEach(el=>{
+    tot++;
+    const exp=el.dataset.a, t=el.dataset.t;
+    let user = el.value;
+    let correct;
+    if(t==='num'){correct = num(user)===num(exp) && user.trim()!=='';}
+    else{const opts=String(exp).split('|').map(x=>x.trim()); correct = opts.includes(user.trim()) && user.trim()!=='';}
+    el.classList.remove('correct','wrong');
+    el.classList.add(correct?'correct':'wrong');
+    if(correct)ok++;
+  });
+  return {ok,tot,allOk:ok===tot};
+}
+function gradeChoice(q){
+  const sel=[...document.querySelectorAll('#qArea .choice.sel')].map(c=>c.dataset.opt);
+  const ans=q.answer;
+  document.querySelectorAll('#qArea .choice').forEach(ch=>{
+    const o=ch.dataset.opt, inAns=ans.includes(o), picked=ch.classList.contains('sel');
+    ch.classList.remove('sel');
+    if(inAns&&picked)ch.classList.add('correct');
+    else if(!inAns&&picked)ch.classList.add('wrong');
+    else if(inAns&&!picked)ch.classList.add('miss');
+  });
+  const allOk = sel.length===ans.length && ans.every(a=>sel.includes(a));
+  let hit=ans.filter(a=>sel.includes(a)).length;
+  return {ok:hit,tot:ans.length,allOk};
+}
+
+function showFeedback(res,q,revealed){
+  const f=document.getElementById('feedback');
+  f.className='feedback show';
+  const banner = revealed ? `<div class="fb-banner no">正解を表示しました</div>`
+    : `<div class="fb-banner ${res.allOk?'ok':'no'}">${res.allOk?'全問正解！':'惜しい ── 解説を確認しよう'}<span class="sc">正解 ${res.ok}/${res.tot} 箇所</span></div>`;
+  let ansLine='';
+  if(q.kind==='choice'){ansLine=`<div class="ans-line">正解：${q.answer.join('・')}</div>`;}
+  f.innerHTML=`${banner}<div class="fb-body">${ansLine}${q.explain}</div>`;
+}
+
+function recordStat(q,allOk){
+  if(!stats[q.cat]) stats[q.cat]={tried:0,ok:0};
+  stats[q.cat].tried++; if(allOk)stats[q.cat].ok++;
+  renderDash();
+}
+
+document.getElementById('btnCheck').addEventListener('click',()=>{
+  if(answered)return;
+  const q=pool[cur];
+  const res = q.kind==='choice' ? gradeChoice(q) : gradeGrid(q);
+  answered=true;
+  recordStat(q,res.allOk);
+  showFeedback(res,q,false);
+  document.getElementById('btnCheck').disabled=true;
+});
+document.getElementById('btnReveal').addEventListener('click',()=>{
+  const q=pool[cur];
+  if(!answered){
+    // 顯示正解填入
+    if(q.kind!=='choice'){
+      document.querySelectorAll('#qArea input, #qArea select.selbox').forEach(el=>{
+        if(el.dataset.t==='num'){el.value=fmt(num(el.dataset.a));}
+        else{el.value=String(el.dataset.a).split('|')[0];}
+        el.classList.add('correct');
+      });
+    }else{
+      document.querySelectorAll('#qArea .choice').forEach(ch=>{
+        ch.classList.remove('sel','wrong','miss');
+        if(q.answer.includes(ch.dataset.opt))ch.classList.add('correct');
+      });
+    }
+    answered=true; recordStat(q,false);
+  }
+  showFeedback({ok:0,tot:0,allOk:false},q,true);
+  document.getElementById('btnCheck').disabled=true;
+});
+document.getElementById('btnNext').addEventListener('click',()=>{
+  cur=(cur+1)%pool.length; loadQ();
+  document.getElementById('trainer').scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+/* filters */
+const FCATS=["全部",...CATS];
+const fbox=document.getElementById('filters');
+FCATS.forEach((c,i)=>{
+  const b=document.createElement('button');b.textContent=c;if(i===0)b.classList.add('on');
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#filters button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    pool=(c==="全部")?[...PROB]:PROB.filter(p=>p.cat===c);
+    cur=0;loadQ();
+  });
+  fbox.appendChild(b);
+});
+function updateCount(){document.getElementById('qcount').textContent=`全 ${PROB.length} 問`;}
+
+/* dashboard */
+function rate(c){const s=stats[c];return s.tried===0?null:Math.round(s.ok/s.tried*100);}
+function cls(r){if(r===null)return 's-none';if(r<60)return 's-weak';if(r<=85)return 's-mid';return 's-strong';}
+function color(r){if(r===null)return 'var(--line2)';if(r<60)return 'var(--bad)';if(r<=85)return 'var(--warn)';return 'var(--ok)';}
+function renderDash(){
+  const g=document.getElementById('dashGrid');g.innerHTML='';
+  CATS.forEach(c=>{
+    const s=stats[c],r=rate(c);
+    g.insertAdjacentHTML('beforeend',`<div class="dcard ${cls(r)}">
+      <div class="cat">${c}</div>
+      <div class="rate">${r===null?'—':r+'%'}</div>
+      <div class="det">${s.ok}/${s.tried} 全問正解</div>
+      <div class="pbar"><div class="pfill" style="width:${r===null?0:r}%;background:${color(r)}"></div></div>
+    </div>`);
+  });
+  // advice
+  const tried=CATS.filter(c=>stats[c].tried>0);
+  const ab=document.getElementById('adviceBody');
+  if(tried.length===0){ab.innerHTML=`<p style="color:var(--ink3)">還沒有作答紀錄。先到上面練幾題，這裡會告訴你該重點複習什麼。</p>`;return;}
+  const weak=tried.filter(c=>rate(c)<=85).sort((a,b)=>rate(a)-rate(b));
+  if(weak.length===0){
+    ab.innerHTML=`<p><b>目前每一類都超過 85%，狀態很好。</b>把「全部」標籤打開、混合題型再跑一輪確認穩定度，就可以預約 CBT 了。</p>`;
+    return;
+  }
+  let h='';
+  weak.slice(0,3).forEach((c,i)=>{ h+=`<p><b>${i+1}. ${c}（${rate(c)}%）</b> ── ${ADVICE[c]}</p>`; });
+  ab.innerHTML=h;
+}
+
+/* 複製報告 */
+document.getElementById('btnCopy').addEventListener('click',()=>{
+  let lines=['【簿記 第2問・第3問 弱点レポート】'];
+  let any=false;
+  CATS.forEach(c=>{ const s=stats[c]; if(s.tried>0){any=true; lines.push(`${c}：${s.ok}/${s.tried}（${rate(c)}%）`);} });
+  if(!any)lines.push('（まだ記録がありません）');
+  const weak=CATS.filter(c=>stats[c].tried>0&&rate(c)<=85).sort((a,b)=>rate(a)-rate(b));
+  if(weak.length)lines.push('要強化：'+weak.join('・'));
+  const txt=lines.join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>{
+      const c=document.getElementById('copied');c.style.display='inline';setTimeout(()=>c.style.display='none',1800);
+    }).catch(()=>window.prompt('コピーしてください：',txt));
+  }else{ window.prompt('コピーしてください：',txt); }
+});
+
+/* reset */
+document.getElementById('btnReset').addEventListener('click',()=>{
+  CATS.forEach(c=>stats[c]={tried:0,ok:0}); renderDash();
+});
+
+/* init */
+loadQ();
+renderDash();
+updateCount();
+</script>
+</body>
+</html>
