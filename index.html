@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>分账账本｜割り勘帳簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFEBE1; --card:#FBF9F4; --ink:#161A18; --muted:#7A756A; --line:#D9D3C5;
+  --jade:#17544A; --verm:#BE3C28; --brass:#C29438; --radius:3px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink)}
+body{
+  font-family:"PingFang SC","Hiragino Sans","Noto Sans SC","Noto Sans JP",system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.6;padding:0 16px 64px;-webkit-text-size-adjust:100%;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto}
+
+header{padding:26px 0 18px;border-bottom:2px solid var(--ink);position:relative}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--verm)}
+.eyebrow{font-size:11px;letter-spacing:.22em;color:var(--muted)}
+h1{font-family:"Noto Serif SC",serif;font-weight:900;font-size:clamp(28px,7vw,42px);letter-spacing:.06em;line-height:1.15;margin:2px 0 0}
+h1 .ja{display:block;font-size:.42em;letter-spacing:.14em;color:var(--muted);font-weight:600;margin-top:4px}
+.head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.head-right{text-align:right}
+.langs{display:flex;gap:0;justify-content:flex-end;margin-bottom:8px}
+.langs button{font:inherit;font-size:12px;letter-spacing:.1em;padding:4px 12px;background:#fff;border:1px solid var(--line);cursor:pointer;color:var(--muted)}
+.langs button:first-child{border-right:0;border-radius:var(--radius) 0 0 var(--radius)}
+.langs button:last-child{border-radius:0 var(--radius) var(--radius) 0}
+.langs button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.total-lbl{font-size:11px;letter-spacing:.16em;color:var(--muted)}
+.total-val{font-size:clamp(22px,5vw,30px);font-weight:600;color:var(--jade)}
+
+.cols{display:grid;grid-template-columns:1fr;gap:20px;margin-top:26px}
+@media(min-width:920px){.cols{grid-template-columns:1fr 400px;align-items:start}.right{position:sticky;top:20px}}
+
+.card{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--jade);border-radius:var(--radius);padding:18px;margin-bottom:20px}
+.card.rim-verm{border-top-color:var(--verm)}
+.card.rim-brass{border-top-color:var(--brass)}
+h2{font-family:"Noto Serif SC",serif;font-size:17px;font-weight:600;letter-spacing:.08em}
+h2 small{font-weight:600;font-size:12px;color:var(--muted);letter-spacing:.08em;margin-left:8px}
+.sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+
+label{display:block;font-size:11px;letter-spacing:.14em;color:var(--muted);margin:14px 0 7px}
+input[type=text],input[type=number],select{width:100%;padding:9px 10px;font:inherit;background:#fff;border:1px solid var(--line);border-radius:var(--radius);color:var(--ink)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+.row{display:flex;gap:8px}
+.w-amt{flex:1.4}.w-cur{flex:0 0 110px}
+
+/* checkbox grid */
+.cbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.cb{display:flex;align-items:center;gap:7px;padding:7px 9px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;font-size:15px;user-select:none}
+.cb input{width:16px;height:16px;accent-color:var(--jade);margin:0;flex:0 0 auto}
+.cb.pay input{accent-color:var(--brass)}
+.cb:has(input:checked){border-color:var(--jade);background:#F2F7F5}
+.cb.pay:has(input:checked){border-color:var(--brass);background:#FBF5E7}
+.mini{font-size:11px;letter-spacing:.08em;padding:4px 9px;background:transparent;border:1px dashed var(--line);color:var(--muted);cursor:pointer;border-radius:var(--radius);font-family:inherit}
+.mini:hover{color:var(--ink);border-color:var(--muted)}
+.minirow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+.tabs{display:flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.tabs button{flex:1;font:inherit;font-size:13px;padding:8px 4px;background:#fff;border:0;border-right:1px solid var(--line);cursor:pointer;color:var(--muted)}
+.tabs button:last-child{border-right:0}
+.tabs button.on{background:var(--ink);color:var(--paper)}
+
+.per{display:flex;align-items:center;gap:8px;margin-top:7px}
+.per .nm{flex:0 0 54px;font-size:14px}
+.per input{flex:1}
+.per .unit{font-size:11px;color:var(--muted)}
+.hint{font-size:12px;color:var(--muted);margin-top:7px}
+.hint.warn{color:var(--verm)}
+
+.actions{display:flex;gap:8px;margin-top:20px}
+.btn{font:inherit;font-size:15px;padding:11px 16px;cursor:pointer;border-radius:var(--radius);background:var(--ink);color:var(--paper);border:1px solid var(--ink);flex:1}
+.btn.ghost{background:transparent;color:var(--muted);border-color:var(--line);flex:0 0 auto}
+.btn.ghost:hover{color:var(--ink);border-color:var(--muted)}
+
+/* balance table */
+.bt{width:100%;border-collapse:collapse}
+.bt th{font-size:10px;letter-spacing:.12em;color:var(--muted);font-weight:400;text-align:right;padding:0 0 6px;border-bottom:1px solid var(--ink)}
+.bt th:first-child{text-align:left}
+.bt td{padding:9px 0;border-bottom:1px solid var(--line);text-align:right;font-size:14px}
+.bt td:first-child{text-align:left;font-size:15px}
+.bt td.net{font-weight:600;padding-right:7px;position:relative;background-repeat:no-repeat;background-position:right center}
+.bt td.pos{color:var(--jade)}
+.bt td.neg{color:var(--verm)}
+.bt td.zero{color:var(--muted)}
+.legend{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:10px}
+
+.tx{border-top:1px solid var(--ink);margin-top:18px;padding-top:12px}
+.txrow{display:flex;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px dotted var(--line);font-size:15px}
+.txrow .from{color:var(--verm);font-weight:600;min-width:2.4em}
+.txrow .arw{flex:1;border-bottom:1px dashed var(--line);transform:translateY(-4px)}
+.txrow .to{color:var(--jade);font-weight:600;min-width:2.4em;text-align:right}
+.txrow .amt{min-width:80px;text-align:right;font-weight:600}
+
+.exp{border-bottom:1px solid var(--line);padding:12px 0}
+.exp:last-child{border-bottom:0}
+.exp-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.exp-title{font-size:15px;font-weight:600}
+.exp-amt{font-size:15px;font-weight:600;white-space:nowrap}
+.exp-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.exp-tools{display:flex;gap:6px;margin-top:8px}
+.empty{color:var(--muted);font-size:14px;padding:14px 0;border-top:1px dashed var(--line)}
+footer{margin-top:26px;font-size:12px;color:var(--muted);text-align:center;line-height:1.9}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:var(--radius);font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="head-row">
+    <div>
+      <div class="eyebrow">2026.08.03 — 08.06 ／ 上海 ／ 7</div>
+      <h1><span data-i18n="appTitle"></span><span class="ja" data-i18n="appTitleSub"></span></h1>
+    </div>
+    <div class="head-right">
+      <div class="langs">
+        <button type="button" data-lang="zh">简体中文</button>
+        <button type="button" data-lang="ja">日本語</button>
+      </div>
+      <div class="total-lbl" data-i18n="grandLbl"></div>
+      <div class="total-val mono" id="grandTotal">—</div>
+    </div>
+  </div>
+</header>
+
+<div class="cols">
+  <div class="left">
+
+    <section class="card">
+      <h2 data-i18n="addTitle"></h2>
+      <p class="sub" data-i18n="addSub"></p>
+
+      <label for="f-title" data-i18n="lblItem"></label>
+      <input type="text" id="f-title" data-i18n-ph="phItem">
+
+      <div class="row">
+        <div class="w-amt">
+          <label for="f-amount" data-i18n="lblAmount"></label>
+          <input type="number" id="f-amount" inputmode="decimal" step="0.01" min="0" placeholder="0">
+        </div>
+        <div class="w-cur">
+          <label for="f-cur" data-i18n="lblCur"></label>
+          <select id="f-cur">
+            <option value="CNY" data-i18n="curCNY"></option>
+            <option value="JPY" data-i18n="curJPY"></option>
+          </select>
+        </div>
+      </div>
+
+      <label data-i18n="lblPayers"></label>
+      <div class="cbs" id="payerBox"></div>
+      <div id="payerAmts"></div>
+
+      <label data-i18n="lblParts"></label>
+      <div class="cbs" id="partBox"></div>
+      <div class="minirow">
+        <button class="mini" type="button" id="selAll" data-i18n="selAll"></button>
+        <button class="mini" type="button" id="selNone" data-i18n="selNone"></button>
+      </div>
+
+      <label data-i18n="lblMode"></label>
+      <div class="tabs" id="modeTabs">
+        <button type="button" data-mode="even" class="on" data-i18n="modeEven"></button>
+        <button type="button" data-mode="shares" data-i18n="modeShares"></button>
+        <button type="button" data-mode="exact" data-i18n="modeExact"></button>
+      </div>
+      <div id="partVals"></div>
+      <div class="hint" id="modeHint"></div>
+
+      <div class="actions">
+        <button class="btn" id="saveBtn"></button>
+        <button class="btn ghost" id="cancelBtn" hidden data-i18n="btnCancel"></button>
+      </div>
+    </section>
+
+    <section class="card rim-brass">
+      <h2 data-i18n="listTitle"></h2>
+      <p class="sub" id="listSub"></p>
+      <div id="expList"></div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="setTitle"></h2>
+      <p class="sub" data-i18n="setSub"></p>
+
+      <label data-i18n="lblMembers"></label>
+      <div id="memberEdit"></div>
+      <div class="row" style="margin-top:10px">
+        <input type="text" id="newMember" maxlength="8" data-i18n-ph="phMember">
+        <button class="btn ghost" id="addMember" style="flex:0 0 auto" data-i18n="btnAdd"></button>
+      </div>
+
+      <label data-i18n="lblDispCur"></label>
+      <select id="dispCur">
+        <option value="CNY" data-i18n="curCNY"></option>
+        <option value="JPY" data-i18n="curJPY"></option>
+      </select>
+
+      <label data-i18n="lblRate"></label>
+      <div class="hint" data-i18n="rateNote"></div>
+      <div class="row" style="align-items:center;gap:10px;margin-top:6px">
+        <span class="mono" style="flex:0 0 auto;font-size:14px">1 CNY =</span>
+        <input type="number" id="rateJPY" step="0.01" inputmode="decimal" style="flex:1">
+        <span class="mono" style="flex:0 0 auto;font-size:14px">JPY</span>
+      </div>
+
+      <label data-i18n="lblData"></label>
+      <div class="minirow">
+        <button class="mini" id="btnExport" data-i18n="btnExport"></button>
+        <button class="mini" id="btnImport" data-i18n="btnImport"></button>
+        <button class="mini" id="btnReset" data-i18n="btnReset"></button>
+      </div>
+      <input type="file" id="fileIn" accept="application/json" hidden>
+    </section>
+  </div>
+
+  <div class="right">
+    <section class="card rim-verm">
+      <h2 data-i18n="balTitle"></h2>
+      <p class="sub" data-i18n="balSub"></p>
+      <table class="bt">
+        <thead><tr>
+          <th data-i18n="thName"></th>
+          <th data-i18n="thPaid"></th>
+          <th data-i18n="thOwed"></th>
+          <th data-i18n="thNet"></th>
+        </tr></thead>
+        <tbody id="balBody"></tbody>
+      </table>
+      <div class="legend"><span data-i18n="legNeg"></span><span data-i18n="legPos"></span></div>
+
+      <div class="tx" id="txBox"></div>
+
+      <div class="actions">
+        <button class="btn ghost" id="btnCopy" style="flex:1" data-i18n="btnCopy"></button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer data-i18n="footer"></footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+const T = {
+ zh:{
+  appTitle:"分账账本", appTitleSub:"割り勘帳簿", grandLbl:"全团总支出",
+  addTitle:"记一笔", addSub:"谁付的、多少钱、谁要分。",
+  lblItem:"项目", phItem:"例：迪士尼门票", lblAmount:"金额", lblCur:"币种",
+  curCNY:"人民币 CNY", curJPY:"日元 JPY",
+  lblPayers:"谁付的（可多选）", lblParts:"谁要分（可多选）",
+  selAll:"全选", selNone:"清除", lblMode:"怎么分",
+  modeEven:"平均分", modeShares:"按份数", modeExact:"指定金额",
+  hintEven:"每个人分一样多。", hintShares:"填份数，比如只吃一半就填 0.5。", hintExact:"直接填每个人要分的金额。",
+  btnSave:"加入账本", btnUpdate:"保存修改", btnCancel:"取消编辑",
+  listTitle:"支出明细", listEmpty:"还没有任何支出，上面记第一笔吧。", listCount:n=>n+" 笔", listNone:"暂无记录",
+  metaPaid:"付款", metaSplit:"分摊", btnEdit:"修改", btnDel:"删除",
+  setTitle:"设置", setSub:"成员、币种和汇率。", lblMembers:"成员", phMember:"新成员名字", btnAdd:"加入",
+  lblDispCur:"结算币种", lblRate:"汇率", rateNote:"用当天汇率，换算才准。",
+  lblData:"数据", btnExport:"导出文件", btnImport:"导入文件", btnReset:"清空全部",
+  balTitle:"每人收支", balSub:"已付减去应分，就是最后的差额。",
+  thName:"成员", thPaid:"已付", thOwed:"应分", thNet:"差额",
+  legNeg:"红＝还要付出去", legPos:"绿＝能收回来",
+  txTitle:n=>n+" 笔转账就结清", txNone:"目前不用转账，账是平的。",
+  btnCopy:"复制结算结果",
+  footer:"数据存在这台设备上，换一台看不到。<br>要给同行的人看，用「复制结算结果」发到群里，或「导出文件」传给对方再导入。",
+  errAmount:"先填金额。", errPayer:"选一下谁付的。", errPart:"选一下谁要分。",
+  okSave:"记好了。", okUpdate:"已更新。", okCopy:"已复制，发到群里吧。", okImport:"导入完成。", okReset:"已清空。",
+  errCopy:"复制失败，长按选取吧。", errImport:"这个文件读不出来。",
+  cfmDel:t=>"删除「"+t+"」？", cfmMember:n=>n+" 已经出现在账目里，删掉会一起从那些账目移除，确定？", cfmReset:"所有支出记录都会消失，确定清空？",
+  payDiff:d=>"垫付金额差 "+d+"，调整一下。", payOK:"垫付金额对得上。",
+  exDiff:d=>"还差 "+d+" 没分配。", exOK:"刚好分完。",
+  unitShare:"份", untitled:"未命名支出"
+ },
+ ja:{
+  appTitle:"割り勘帳簿", appTitleSub:"分账账本", grandLbl:"支出の合計",
+  addTitle:"記録する", addSub:"誰が払った？いくら？誰で割る？",
+  lblItem:"項目", phItem:"例：ディズニーのチケット", lblAmount:"金額", lblCur:"通貨",
+  curCNY:"人民元 CNY", curJPY:"日本円 JPY",
+  lblPayers:"払った人（複数可）", lblParts:"割る人（複数可）",
+  selAll:"全員", selNone:"クリア", lblMode:"割り方",
+  modeEven:"均等", modeShares:"口数", modeExact:"金額指定",
+  hintEven:"全員おなじ額で割ります。", hintShares:"口数を入力。半分だけなら 0.5。", hintExact:"一人ずつの負担額を直接入力します。",
+  btnSave:"追加する", btnUpdate:"変更を保存", btnCancel:"編集をやめる",
+  listTitle:"支出の明細", listEmpty:"まだ記録がありません。上から1件目をどうぞ。", listCount:n=>n+" 件", listNone:"記録なし",
+  metaPaid:"支払", metaSplit:"負担", btnEdit:"編集", btnDel:"削除",
+  setTitle:"設定", setSub:"メンバー・通貨・レート。", lblMembers:"メンバー", phMember:"メンバーの名前", btnAdd:"追加",
+  lblDispCur:"精算する通貨", lblRate:"レート", rateNote:"その日のレートを入れると正確に出ます。",
+  lblData:"データ", btnExport:"書き出す", btnImport:"読み込む", btnReset:"全部消す",
+  balTitle:"各自の収支", balSub:"支払額から負担額を引いた差引です。",
+  thName:"名前", thPaid:"支払額", thOwed:"負担額", thNet:"差引",
+  legNeg:"赤＝払う側", legPos:"緑＝受け取る側",
+  txTitle:n=>"送金 "+n+" 回で精算完了", txNone:"送金は不要です。すでに±0。",
+  btnCopy:"精算結果をコピー",
+  footer:"データはこの端末に保存されます。別の端末では見えません。<br>同行者に見せるときは「精算結果をコピー」してグループに貼るか、「書き出す」でファイルを渡してください。",
+  errAmount:"金額を入れてください。", errPayer:"払った人を選んでください。", errPart:"割る人を選んでください。",
+  okSave:"記録しました。", okUpdate:"更新しました。", okCopy:"コピーしました。", okImport:"読み込みました。", okReset:"削除しました。",
+  errCopy:"コピーできません。長押しで選択してください。", errImport:"このファイルは読めません。",
+  cfmDel:t=>"「"+t+"」を削除しますか？", cfmMember:n=>n+" は記録に使われています。削除するとその記録からも外れます。よろしいですか？", cfmReset:"支出の記録がすべて消えます。よろしいですか？",
+  payDiff:d=>"立替の合計が "+d+" ずれています。", payOK:"立替の合計は一致しています。",
+  exDiff:d=>"あと "+d+" 未配分です。", exOK:"ちょうど配分できました。",
+  unitShare:"口", untitled:"名称未設定"
+ }
+};
+
+const CUR_SYM = {CNY:"¥", JPY:"¥"};
+const CUR_DEC = {CNY:2, JPY:0};
+const STORE_KEY = "shanghai-split-v2";
+
+let state = {
+  members: ["源","乐","南","龙","玉","赵","希"].map((n,i)=>({id:"m"+(i+1), name:n})),
+  expenses: [],
+  jpyPerCny: 20.5,
+  dispCur: "CNY",
+  lang: "zh",
+  seq: 1
+};
+let form = {id:null, mode:"even", payers:new Map(), parts:new Map(), payerManual:false};
+
+const $ = s => document.querySelector(s);
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+const nameOf = id => (state.members.find(m=>m.id===id)||{name:"?"}).name;
+const t = k => T[state.lang][k];
+const rateOf = c => c === "JPY" ? (1/(state.jpyPerCny||20.5)) : 1;
+
+function fmt(cents, cur){
+  cur = cur || state.dispCur;
+  const v = (cents/100) / rateOf(cur);
+  const d = CUR_DEC[cur];
+  return CUR_SYM[cur] + v.toLocaleString("ja-JP",{minimumFractionDigits:d, maximumFractionDigits:d});
+}
+function toast(msg){
+  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove("show"), 1900);
+}
+async function save(){
+  try{ if(window.storage) await window.storage.set(STORE_KEY, JSON.stringify(state)); }
+  catch(e){ console.error(e); }
+}
+async function load(){
+  try{
+    if(!window.storage) return;
+    const r = await window.storage.get(STORE_KEY);
+    if(r && r.value){
+      const d = JSON.parse(r.value);
+      if(d && Array.isArray(d.members)) state = Object.assign(state, d);
+    }
+  }catch(e){}
+}
+
+/* ── 计算 ── */
+function calcExpense(exp){
+  const rate = rateOf(exp.currency);
+  const cents = v => Math.round(num(v) * rate * 100);
+  const total = cents(exp.amount);
+  const pay = {};
+  const payers = exp.payers.filter(p => state.members.some(m=>m.id===p.id));
+  let s = 0;
+  payers.forEach(p => { pay[p.id] = cents(p.amount); s += pay[p.id]; });
+  if(payers.length) pay[payers[0].id] += (total - s);
+
+  const owe = {};
+  const parts = exp.parts.filter(p => state.members.some(m=>m.id===p.id));
+  if(parts.length){
+    if(exp.mode === "exact"){
+      let acc = 0;
+      parts.forEach(p => { owe[p.id] = cents(p.value); acc += owe[p.id]; });
+      owe[parts[0].id] += (total - acc);
+    }else{
+      const w = parts.map(p => exp.mode === "shares" ? Math.max(0, num(p.value)) : 1);
+      const sum = w.reduce((a,b)=>a+b,0);
+      let acc = 0;
+      parts.forEach((p,i) => {
+        const c = (i === parts.length-1 && sum>0) ? total-acc : (sum>0 ? Math.round(total*w[i]/sum) : 0);
+        owe[p.id] = c; acc += c;
+      });
+    }
+  }
+  return {total, pay, owe};
+}
+function balances(){
+  const net={}, paid={}, owed={};
+  state.members.forEach(m => { net[m.id]=0; paid[m.id]=0; owed[m.id]=0; });
+  let grand = 0;
+  state.expenses.forEach(e => {
+    const r = calcExpense(e); grand += r.total;
+    for(const id in r.pay){ if(id in paid){ paid[id]+=r.pay[id]; net[id]+=r.pay[id]; } }
+    for(const id in r.owe){ if(id in owed){ owed[id]+=r.owe[id]; net[id]-=r.owe[id]; } }
+  });
+  return {net, paid, owed, grand};
+}
+function settle(net){
+  const cred=[], debt=[];
+  state.members.forEach(m => {
+    const c = net[m.id]||0;
+    if(c>0) cred.push({id:m.id,c}); else if(c<0) debt.push({id:m.id,c:-c});
+  });
+  cred.sort((a,b)=>b.c-a.c); debt.sort((a,b)=>b.c-a.c);
+  const tx=[]; let i=0,j=0;
+  while(i<debt.length && j<cred.length){
+    const amt = Math.min(debt[i].c, cred[j].c);
+    if(amt>0) tx.push({from:debt[i].id, to:cred[j].id, cents:amt});
+    debt[i].c-=amt; cred[j].c-=amt;
+    if(debt[i].c<=0) i++;
+    if(cred[j].c<=0) j++;
+  }
+  return tx;
+}
+
+/* ── 表单 ── */
+function checkbox(m, kind){
+  const lab = document.createElement("label");
+  lab.className = "cb" + (kind==="pay" ? " pay" : "");
+  const inp = document.createElement("input");
+  inp.type = "checkbox";
+  const map = kind==="pay" ? form.payers : form.parts;
+  inp.checked = map.has(m.id);
+  inp.onchange = () => {
+    if(inp.checked) map.set(m.id, kind==="pay" ? "" : (form.mode==="shares" ? "1" : ""));
+    else map.delete(m.id);
+    if(kind==="pay") form.payerManual = false;
+    renderForm();
+  };
+  const sp = document.createElement("span"); sp.textContent = m.name;
+  lab.append(inp, sp);
+  return lab;
+}
+function renderBoxes(){
+  const pb = $("#payerBox"), tb = $("#partBox");
+  pb.innerHTML = ""; tb.innerHTML = "";
+  state.members.forEach(m => { pb.appendChild(checkbox(m,"pay")); tb.appendChild(checkbox(m,"part")); });
+}
+function renderPayerAmts(){
+  const box = $("#payerAmts"); box.innerHTML = "";
+  if(form.payers.size < 2) return;
+  const total = num($("#f-amount").value);
+  const ids = [...form.payers.keys()];
+  if(!form.payerManual){
+    const each = Math.floor(total/ids.length*100)/100;
+    ids.forEach((id,i) => form.payers.set(id, String(i===ids.length-1 ? +(total-each*(ids.length-1)).toFixed(2) : each)));
+  }
+  let sum = 0;
+  ids.forEach(id => {
+    sum += num(form.payers.get(id));
+    const d = document.createElement("div"); d.className="per";
+    const n = document.createElement("span"); n.className="nm"; n.textContent = nameOf(id);
+    const inp = document.createElement("input");
+    inp.type="number"; inp.step="0.01"; inp.inputMode="decimal"; inp.value = form.payers.get(id);
+    inp.oninput = () => { form.payerManual = true; form.payers.set(id, inp.value); renderPayerAmts(); };
+    d.append(n, inp); box.appendChild(d);
+  });
+  const diff = +(total - sum).toFixed(2);
+  const h = document.createElement("div");
+  h.className = "hint" + (Math.abs(diff)>0.005 ? " warn" : "");
+  h.textContent = Math.abs(diff)>0.005 ? t("payDiff")(diff.toFixed(2)) : t("payOK");
+  box.appendChild(h);
+}
+function renderPartVals(){
+  const box = $("#partVals"); box.innerHTML = "";
+  if(form.mode === "even") return;
+  const ids = [...form.parts.keys()];
+  let sum = 0;
+  ids.forEach(id => {
+    sum += num(form.parts.get(id));
+    const d = document.createElement("div"); d.className="per";
+    const n = document.createElement("span"); n.className="nm"; n.textContent = nameOf(id);
+    const inp = document.createElement("input");
+    inp.type="number"; inp.step="0.01"; inp.min="0"; inp.inputMode="decimal";
+    inp.value = form.parts.get(id);
+    inp.placeholder = form.mode==="shares" ? "1" : "0";
+    inp.oninput = () => { form.parts.set(id, inp.value); renderPartVals(); };
+    const u = document.createElement("span"); u.className="unit";
+    u.textContent = form.mode==="shares" ? t("unitShare") : $("#f-cur").value;
+    d.append(n, inp, u); box.appendChild(d);
+  });
+  if(form.mode === "exact" && ids.length){
+    const diff = +(num($("#f-amount").value) - sum).toFixed(2);
+    const h = document.createElement("div");
+    h.className = "hint" + (Math.abs(diff)>0.005 ? " warn" : "");
+    h.textContent = Math.abs(diff)>0.005 ? t("exDiff")(diff.toFixed(2)) : t("exOK");
+    box.appendChild(h);
+  }
+}
+function renderForm(){
+  renderBoxes(); renderPayerAmts(); renderPartVals();
+  $("#modeHint").textContent = t(form.mode==="even" ? "hintEven" : form.mode==="shares" ? "hintShares" : "hintExact");
+  $("#saveBtn").textContent = t(form.id ? "btnUpdate" : "btnSave");
+  $("#cancelBtn").hidden = !form.id;
+}
+function resetForm(){
+  form = {id:null, mode:"even", payers:new Map(), parts:new Map(), payerManual:false};
+  $("#f-title").value = ""; $("#f-amount").value = "";
+  document.querySelectorAll("#modeTabs button").forEach(b => b.classList.toggle("on", b.dataset.mode==="even"));
+  renderForm();
+}
+function saveExpense(){
+  const amount = num($("#f-amount").value);
+  if(amount <= 0) return toast(t("errAmount"));
+  if(!form.payers.size) return toast(t("errPayer"));
+  if(!form.parts.size) return toast(t("errPart"));
+  const payers = [...form.payers.keys()].map((id,i,arr) => ({id, amount: arr.length===1 ? amount : num(form.payers.get(id))}));
+  const parts = [...form.parts.keys()].map(id => ({id, value: form.mode==="even" ? 1 : num(form.parts.get(id))}));
+  const exp = {
+    id: form.id || ("e"+(state.seq++)),
+    title: $("#f-title").value.trim() || t("untitled"),
+    amount, currency: $("#f-cur").value, payers, parts, mode: form.mode
+  };
+  const i = state.expenses.findIndex(e => e.id === exp.id);
+  if(i>=0) state.expenses[i]=exp; else state.expenses.push(exp);
+  const was = i>=0;
+  resetForm(); render(); save(); toast(t(was ? "okUpdate" : "okSave"));
+}
+function editExpense(id){
+  const e = state.expenses.find(x=>x.id===id); if(!e) return;
+  form.id=e.id; form.mode=e.mode; form.payerManual = e.payers.length>1;
+  form.payers = new Map(e.payers.map(p=>[p.id, String(p.amount)]));
+  form.parts = new Map(e.parts.map(p=>[p.id, String(p.value)]));
+  $("#f-title").value = e.title; $("#f-amount").value = e.amount; $("#f-cur").value = e.currency;
+  document.querySelectorAll("#modeTabs button").forEach(b => b.classList.toggle("on", b.dataset.mode===e.mode));
+  renderForm(); window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ── 渲染 ── */
+function renderList(){
+  const box = $("#expList"); box.innerHTML = "";
+  if(!state.expenses.length){
+    const d = document.createElement("div"); d.className="empty"; d.textContent = t("listEmpty");
+    box.appendChild(d); $("#listSub").textContent = t("listNone"); return;
+  }
+  $("#listSub").textContent = t("listCount")(state.expenses.length);
+  [...state.expenses].reverse().forEach(e => {
+    const r = calcExpense(e);
+    const el = document.createElement("div"); el.className="exp";
+    const payTxt = e.payers.map(p => nameOf(p.id) + (e.payers.length>1 ? " "+p.amount : "")).join("、");
+    const partTxt = e.mode==="even"
+      ? e.parts.map(p => nameOf(p.id)).join("、")
+      : e.parts.map(p => nameOf(p.id)+" "+p.value+(e.mode==="shares" ? t("unitShare") : "")).join("、");
+    const orig = e.currency === state.dispCur ? "" : ` (${CUR_SYM[e.currency]}${e.amount} ${e.currency})`;
+    const top = document.createElement("div"); top.className="exp-top";
+    const ti = document.createElement("span"); ti.className="exp-title"; ti.textContent = e.title;
+    const am = document.createElement("span"); am.className="exp-amt mono"; am.textContent = fmt(r.total)+orig;
+    top.append(ti, am);
+    const meta = document.createElement("div"); meta.className="exp-meta";
+    meta.textContent = t("metaPaid")+"：" + payTxt + "　·　" + t("metaSplit")+"：" + partTxt;
+    const tools = document.createElement("div"); tools.className="exp-tools";
+    const ed = document.createElement("button"); ed.className="mini"; ed.textContent=t("btnEdit");
+    ed.onclick = () => editExpense(e.id);
+    const rm = document.createElement("button"); rm.className="mini"; rm.textContent=t("btnDel");
+    rm.onclick = () => {
+      if(!confirm(t("cfmDel")(e.title))) return;
+      state.expenses = state.expenses.filter(x=>x.id!==e.id);
+      if(form.id===e.id) resetForm();
+      render(); save();
+    };
+    tools.append(ed, rm);
+    el.append(top, meta, tools); box.appendChild(el);
+  });
+}
+function renderBalance(){
+  const {net, paid, owed, grand} = balances();
+  $("#grandTotal").textContent = state.expenses.length ? fmt(grand) : "—";
+  const body = $("#balBody"); body.innerHTML = "";
+  const max = Math.max(1, ...state.members.map(m => Math.abs(net[m.id]||0)));
+  state.members.forEach(m => {
+    const c = net[m.id]||0;
+    const tr = document.createElement("tr");
+    const cls = c>0 ? "pos" : (c<0 ? "neg" : "zero");
+    const pct = Math.round(Math.abs(c)/max*100);
+    const tint = c>0 ? "rgba(23,84,74,.13)" : "rgba(190,60,40,.13)";
+    tr.innerHTML = "<td></td><td class='mono'></td><td class='mono'></td><td class='mono net "+cls+"'></td>";
+    const tds = tr.querySelectorAll("td");
+    tds[0].textContent = m.name;
+    tds[1].textContent = fmt(paid[m.id]||0);
+    tds[2].textContent = fmt(owed[m.id]||0);
+    tds[3].textContent = c===0 ? "0" : (c>0 ? "+" : "−") + fmt(Math.abs(c));
+    if(c!==0) tds[3].style.background = `linear-gradient(to left, ${tint} ${pct}%, transparent ${pct}%)`;
+    body.appendChild(tr);
+  });
+
+  const tb = $("#txBox");
+  tb.innerHTML = "";
+  const tx = settle(net);
+  if(!tx.length){
+    const d = document.createElement("div"); d.className="empty"; d.style.border="0"; d.style.padding="6px 0";
+    d.textContent = t("txNone"); tb.appendChild(d); return;
+  }
+  const h = document.createElement("div"); h.className="sub"; h.style.margin="0 0 6px";
+  h.textContent = t("txTitle")(tx.length); tb.appendChild(h);
+  tx.forEach(x => {
+    const r = document.createElement("div"); r.className="txrow";
+    r.innerHTML = "<span class='from'></span><span class='arw'></span><span class='to'></span><span class='amt mono'></span>";
+    r.querySelector(".from").textContent = nameOf(x.from);
+    r.querySelector(".to").textContent = "→ " + nameOf(x.to);
+    r.querySelector(".amt").textContent = fmt(x.cents);
+    tb.appendChild(r);
+  });
+}
+function renderMembers(){
+  const box = $("#memberEdit"); box.innerHTML = "";
+  state.members.forEach(m => {
+    const d = document.createElement("div"); d.className="per";
+    const inp = document.createElement("input");
+    inp.type="text"; inp.value=m.name; inp.maxLength=8;
+    inp.onchange = () => { m.name = inp.value.trim() || m.name; render(); save(); };
+    const rm = document.createElement("button"); rm.className="mini"; rm.textContent=t("btnDel");
+    rm.onclick = () => {
+      const used = state.expenses.some(e => e.payers.some(p=>p.id===m.id) || e.parts.some(p=>p.id===m.id));
+      if(used && !confirm(t("cfmMember")(m.name))) return;
+      state.members = state.members.filter(x=>x.id!==m.id);
+      state.expenses.forEach(e => {
+        e.payers = e.payers.filter(p=>p.id!==m.id);
+        e.parts  = e.parts.filter(p=>p.id!==m.id);
+      });
+      state.expenses = state.expenses.filter(e => e.payers.length && e.parts.length);
+      form.payers.delete(m.id); form.parts.delete(m.id);
+      render(); save();
+    };
+    d.append(inp, rm); box.appendChild(d);
+  });
+}
+function applyLang(){
+  document.documentElement.lang = state.lang === "ja" ? "ja" : "zh-Hans";
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const v = T[state.lang][el.dataset.i18n];
+    if(typeof v === "string"){ if(el.dataset.i18n === "footer") el.innerHTML = v; else el.textContent = v; }
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => el.placeholder = T[state.lang][el.dataset.i18nPh]);
+  document.querySelectorAll(".langs button").forEach(b => b.classList.toggle("on", b.dataset.lang === state.lang));
+}
+function render(){ applyLang(); renderMembers(); renderForm(); renderList(); renderBalance(); }
+
+/* ── 输出 ── */
+function summaryText(){
+  const {net, paid, owed, grand} = balances();
+  const L = [];
+  ["zh","ja"].forEach((lg, k) => {
+    const D = T[lg];
+    if(k) L.push("", "──────────");
+    L.push("【" + D.balTitle + "】" + D.grandLbl + " " + fmt(grand));
+    state.members.forEach(m => {
+      const c = net[m.id]||0;
+      L.push(`${m.name}：${D.thPaid} ${fmt(paid[m.id]||0)}／${D.thOwed} ${fmt(owed[m.id]||0)}／${D.thNet} ${c===0?"0":(c>0?"+":"−")+fmt(Math.abs(c))}`);
+    });
+    const tx = settle(net);
+    if(tx.length){
+      L.push("- " + D.txTitle(tx.length) + " -");
+      tx.forEach(x => L.push(`${nameOf(x.from)} → ${nameOf(x.to)}　${fmt(x.cents)}`));
+    }else L.push(D.txNone);
+  });
+  return L.join("\n");
+}
+async function copySummary(){
+  const txt = summaryText();
+  try{ await navigator.clipboard.writeText(txt); toast(t("okCopy")); }
+  catch(e){
+    const ta = document.createElement("textarea"); ta.value = txt;
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast(t("okCopy")); }catch(_){ toast(t("errCopy")); }
+    ta.remove();
+  }
+}
+
+/* ── 绑定 ── */
+document.querySelectorAll(".langs button").forEach(b => {
+  b.onclick = () => { state.lang = b.dataset.lang; render(); save(); };
+});
+document.querySelectorAll("#modeTabs button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("#modeTabs button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); form.mode = b.dataset.mode;
+    if(form.mode==="shares") form.parts.forEach((v,k)=>{ if(!num(v)) form.parts.set(k,"1"); });
+    renderForm();
+  };
+});
+$("#selAll").onclick = () => { state.members.forEach(m=>{ if(!form.parts.has(m.id)) form.parts.set(m.id, form.mode==="shares"?"1":""); }); renderForm(); };
+$("#selNone").onclick = () => { form.parts.clear(); renderForm(); };
+$("#f-amount").oninput = () => { form.payerManual=false; renderPayerAmts(); renderPartVals(); };
+$("#f-cur").onchange = renderPartVals;
+$("#saveBtn").onclick = saveExpense;
+$("#cancelBtn").onclick = resetForm;
+$("#btnCopy").onclick = copySummary;
+$("#addMember").onclick = () => {
+  const v = $("#newMember").value.trim(); if(!v) return;
+  state.members.push({id:"m"+Date.now().toString(36), name:v});
+  $("#newMember").value=""; render(); save();
+};
+$("#dispCur").onchange = e => { state.dispCur = e.target.value; render(); save(); };
+$("#rateJPY").oninput = e => { const v = num(e.target.value); if(v>0){ state.jpyPerCny = v; render(); save(); } };
+$("#btnExport").onclick = () => {
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "shanghai-split.json"; a.click();
+  URL.revokeObjectURL(a.href);
+};
+$("#btnImport").onclick = () => $("#fileIn").click();
+$("#fileIn").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if(!d || !Array.isArray(d.members)) throw 0;
+      state = Object.assign(state, d); resetForm(); render(); save(); toast(t("okImport"));
+    }catch(_){ toast(t("errImport")); }
+  };
+  r.readAsText(f); e.target.value = "";
+};
+$("#btnReset").onclick = () => {
+  if(!confirm(t("cfmReset"))) return;
+  state.expenses=[]; state.seq=1; resetForm(); render(); save(); toast(t("okReset"));
+};
+
+(async () => {
+  await load();
+  $("#dispCur").value = state.dispCur;
+  $("#rateJPY").value = state.jpyPerCny;
+  render();
+})();
+</script>
+</body>
+</html>
